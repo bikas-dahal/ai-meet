@@ -23,7 +23,7 @@ export const DashboardNavbar = () => {
     return () => {
       document.removeEventListener("keydown", handleKeydown);
     };
-  }, [commandOpen]);
+  }, []);
 
   return (
     <>
