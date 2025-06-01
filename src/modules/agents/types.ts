@@ -10,6 +10,9 @@ export const agentsInsertSchema = z.object({
   instructions: z.string().min(3, { message: "Instructions must be at least 3 characters long" }).max(1000, { message: "Instructions must be at most 1000 characters long" }),
 });
 
-
+export const agentUpdateSchema = agentsInsertSchema.extend({
+  id: z.string().min(1, { message: "Agent ID is required" }),
+})
 
 export type AgentsInsertSchema = z.infer<typeof agentsInsertSchema>;
+export type AgentsUpdateSchema = z.infer<typeof agentUpdateSchema>;

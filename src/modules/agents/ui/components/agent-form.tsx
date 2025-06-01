@@ -29,7 +29,18 @@ export const AgentForm = ({
   initialValues,
 }: AgentFormProps) => {
   const utils = trpc.useUtils();
+
   const createAgent = trpc.agents.create.useMutation({
+    onSuccess: () => {
+      utils.agents.getMany.invalidate();
+      onSuccess?.();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateAgent = trpc.agents.update.useMutation({
     onSuccess: () => {
       utils.agents.getMany.invalidate();
       if (initialValues?.id) {
@@ -38,7 +49,7 @@ export const AgentForm = ({
       onSuccess?.();
     },
     onError: (error) => {
-        toast.error(error.message)
+      toast.error(error.message);
     },
   });
 
@@ -51,11 +62,14 @@ export const AgentForm = ({
   });
 
   const isEdit = !!initialValues?.id;
-  const isPending = createAgent.isPending;
+  const isPending = createAgent.isPending || updateAgent.isPending;
 
   const onSubmit = (data: AgentsInsertSchema) => {
     if (isEdit) {
-      //todo
+      updateAgent.mutate({
+        ...data,
+        id: initialValues.id,
+      });
     } else {
       createAgent.mutate(data);
     }

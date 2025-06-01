@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { agent } from "@/db/schema";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import { agentsInsertSchema } from "../types";
+import { agentsInsertSchema, agentUpdateSchema } from "../types";
 import { z } from "zod";
 import { and, eq, ilike, getTableColumns, desc, count } from "drizzle-orm";
 import {
@@ -13,6 +13,46 @@ import {
 import { TRPCError } from "@trpc/server";
 
 export const agentsRouter = createTRPCRouter({
+  update: protectedProcedure
+    .input(agentUpdateSchema)
+    .mutation(async ({ input, ctx }) => {
+      const [updatedAgent] = await db
+        .update(agent)
+        .set({
+          ...input,
+          userId: ctx.auth.user.id,
+        })
+        .where(and(eq(agent.id, input.id), eq(agent.userId, ctx.auth.user.id)))
+        .returning();
+
+      if (!updatedAgent) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Agent you are looking for not found",
+        });
+      }
+
+      return updatedAgent;
+    }),
+
+  remove: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const [deletedAgent] = await db
+        .delete(agent)
+        .where(and(eq(agent.id, input.id), eq(agent.userId, ctx.auth.user.id)))
+        .returning();
+
+      if (!deletedAgent) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Agent you are looking for not found",
+        });
+      }
+
+      return deletedAgent;
+    }),
+
   getMany: protectedProcedure
     .input(
       z.object({
@@ -74,7 +114,10 @@ export const agentsRouter = createTRPCRouter({
         .where(and(eq(agent.id, input.id), eq(agent.userId, ctx.auth.user.id)));
 
       if (!existingAgent) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Agent you are looking for not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Agent you are looking for not found",
+        });
       }
 
       return existingAgent;
