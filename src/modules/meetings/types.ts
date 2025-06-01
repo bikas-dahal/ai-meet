@@ -4,6 +4,7 @@ import { z } from "zod";
 
 
 export type MeetingGetOne = inferRouterOutputs<AppRouter>['meetings']['getOne']
+export type MeetingGetMany = inferRouterOutputs<AppRouter>['meetings']['getMany']['items']
 
 export const meetingsInsertSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters long" }).max(100, { message: "Name must be at most 100 characters long" }),

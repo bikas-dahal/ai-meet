@@ -4,6 +4,7 @@ import { z } from "zod";
 
 
 export type AgentGetOne = inferRouterOutputs<AppRouter>['agents']['getOne']
+export type AgentGetMany = inferRouterOutputs<AppRouter>['agents']['getMany']['items']
 
 export const agentsInsertSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters long" }).max(100, { message: "Name must be at most 100 characters long" }),
