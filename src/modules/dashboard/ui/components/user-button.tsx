@@ -67,7 +67,7 @@ export const DashboardUserButton = () => {
           <DrawerHeader>
             <DrawerTitle>{data.user.name}</DrawerTitle>
             <DrawerDescription>{data.user.email}</DrawerDescription>
-            <DrawerFooter>
+            <DrawerFooter >
               <Button variant={"outline"}>
                 <CreditCard className="h-4 w-4 text-black" />
                 Billing
@@ -117,11 +117,11 @@ export const DashboardUserButton = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="flex cursor-pointer items-center gap-2">
+        <DropdownMenuItem className="flex p-2 cursor-pointer items-center gap-2">
           Billing <CreditCard className="h-4 w-4 text-black" />
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="flex cursor-pointer items-center gap-2"
+          className="flex p-2 cursor-pointer items-center gap-2"
           onClick={onLogout}
         >
           Logout <LogOut className="h-4 w-4 text-black" />

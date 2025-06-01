@@ -1,19 +1,34 @@
-import { AgentsView, AgentLoadingView, AgentErrorView } from "@/modules/agents/ui/views/agents-view";
+import { AgentListHeader } from "@/modules/agents/ui/components/agent-list-header";
+import {
+  AgentsView,
+  AgentLoadingView,
+  AgentErrorView,
+} from "@/modules/agents/ui/views/agents-view";
 import { HydrateClient, trpc } from "@/trpc/server";
 import { Suspense } from "react";
-import { ErrorBoundary } from 'react-error-boundary'; 
+import { ErrorBoundary } from "react-error-boundary";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
+export default async function AgentsPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-export default function AgentsPage() {
+  if (!session?.user) redirect("/sign-in");
   void trpc.agents.getMany.prefetch();
 
   return (
-    <HydrateClient>
+    <>
+      <AgentListHeader />
+      <HydrateClient>
         <ErrorBoundary fallback={<AgentErrorView />}>
-            <Suspense fallback={<AgentLoadingView />}>
-                <AgentsView />
-            </Suspense>
+          <Suspense fallback={<AgentLoadingView />}>
+            <AgentsView />
+          </Suspense>
         </ErrorBoundary>
-    </HydrateClient>
+      </HydrateClient>
+    </>
   );
 }
