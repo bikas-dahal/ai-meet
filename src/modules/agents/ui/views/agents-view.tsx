@@ -8,6 +8,7 @@ import { columns } from "../components/columns";
 import { EmptyState } from "@/components/empty-state";
 import { useAgentsFilters } from "../../hooks/use-agents-filters";
 import { DataPagination } from "../components/data-pagination";
+import { useRouter } from "next/navigation";
 
 export const AgentsView = () => {
   const [filters, setFilters] = useAgentsFilters();
@@ -16,10 +17,16 @@ export const AgentsView = () => {
     ...filters,
   });
 
+  const router = useRouter();
+
   return (
     <div className="flex flex-col px-4 pb-4 md:px-8 gap-y-4">
-      <DataTable columns={columns} data={data.items} />
-      <DataPagination 
+      <DataTable
+        onRowClick={(row) => router.push(`/agents/${row.id}`)}
+        columns={columns}
+        data={data.items}
+      />
+      <DataPagination
         page={filters.page}
         totalPages={data.totalPages}
         onPageChange={(page) => setFilters({ page })}

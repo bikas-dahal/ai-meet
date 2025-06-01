@@ -10,6 +10,7 @@ import {
   MAX_PAGE_SIZE,
   MIN_PAGE_SIZE,
 } from "@/constants";
+import { TRPCError } from "@trpc/server";
 
 export const agentsRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -35,7 +36,7 @@ export const agentsRouter = createTRPCRouter({
       const data = await db
         .select({
           ...getTableColumns(agent),
-          
+
           // Remove meetingCount for now, or implement proper JOIN if you have a meetings table
         })
         .from(agent)
@@ -53,7 +54,7 @@ export const agentsRouter = createTRPCRouter({
         .where(and(...conditions));
 
       const totalPages = Math.ceil((total.count || 0) / pageSize);
-      
+
       return {
         items: data,
         total: total.count || 0,
@@ -70,11 +71,12 @@ export const agentsRouter = createTRPCRouter({
           // Remove meetingCount for now, or implement proper JOIN if you have a meetings table
         })
         .from(agent)
-        .where(and(
-          eq(agent.id, input.id),
-          eq(agent.userId, ctx.auth.user.id) // Add user check for security
-        ));
-      
+        .where(and(eq(agent.id, input.id), eq(agent.userId, ctx.auth.user.id)));
+
+      if (!existingAgent) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent you are looking for not found" });
+      }
+
       return existingAgent;
     }),
 
