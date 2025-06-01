@@ -3,19 +3,40 @@
 import { LoadingState } from "@/components/loading-state";
 import { ErrorState } from "@/components/error-state";
 import { trpc } from "@/trpc/client";
+import { DataTable } from "../components/data-table";
+import { columns } from "../components/columns";
+import { EmptyState } from "@/components/empty-state";
+import { useAgentsFilters } from "../../hooks/use-agents-filters";
+import { DataPagination } from "../components/data-pagination";
+import { useRouter } from "next/navigation";
 
 export const AgentsView = () => {
-  const [data] = trpc.agents.getMany.useSuspenseQuery();
+  const [filters, setFilters] = useAgentsFilters();
+
+  const [data] = trpc.agents.getMany.useSuspenseQuery({
+    ...filters,
+  });
+
+  const router = useRouter();
 
   return (
-    <div>
-      <h1>Agents</h1>
-      {data?.map((agent) => (
-        <div key={agent.id}>
-          <h2>{agent.name}</h2>
-          <p>{agent.instructions}</p>
-        </div>
-      ))}
+    <div className="flex flex-col px-4 pb-4 md:px-8 gap-y-4">
+      <DataTable
+        onRowClick={(row) => router.push(`/agents/${row.id}`)}
+        columns={columns}
+        data={data.items}
+      />
+      <DataPagination
+        page={filters.page}
+        totalPages={data.totalPages}
+        onPageChange={(page) => setFilters({ page })}
+      />
+      {data.items.length === 0 && (
+        <EmptyState
+          title="Create your first agent"
+          description="Create an agent to get started by providing a name and instructions. Agents are AI-powered assistants that can help you with a variety of tasks."
+        />
+      )}
     </div>
   );
 };

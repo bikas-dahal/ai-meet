@@ -26,7 +26,7 @@ export const GeneratedAvatar = ({ seed, className, variant }: GeneratedAvatarPro
 
     return (
         <Avatar className={cn("", className)}>
-            <AvatarImage className="object-cover rounded-full" src={avatar.toDataUri()} />
+            <AvatarImage className={`object-cover rounded-full mb-2 ${className}`} src={avatar.toDataUri()} />
             <AvatarFallback>
                 {seed.charAt(0).toUpperCase()}
             </AvatarFallback>
