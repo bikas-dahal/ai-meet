@@ -10,8 +10,17 @@ import { MeetingsListHeader } from "@/modules/meetings/ui/components/meetings-li
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { SearchParams } from "nuqs/server";
+import { loadSearchParams } from "@/modules/meetings/params";
 
-export default async function MeetingsPage() {
+interface Props {
+  searchParams: Promise<SearchParams>
+}
+
+export default async function MeetingsPage({searchParams}: Props) {
+
+  const filters = await loadSearchParams(searchParams);
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -19,8 +28,8 @@ export default async function MeetingsPage() {
   if (!session?.user) redirect("/sign-in");
 
   void trpc.meetings.getMany.prefetch({
-    page: 1,
     pageSize: 10,
+    ...filters,
   });
   return (
     <>
