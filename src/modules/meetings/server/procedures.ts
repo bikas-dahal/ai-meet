@@ -10,7 +10,7 @@ import {
   MIN_PAGE_SIZE,
 } from "@/constants";
 import { TRPCError } from "@trpc/server";
-import { meetingsInsertSchema, meetingsUpdateSchema } from "../types";
+import { meetingsInsertSchema, MeetingStatus, meetingsUpdateSchema } from "../types";
 
 export const meetingsRouter = createTRPCRouter({
   create: protectedProcedure
@@ -60,13 +60,27 @@ export const meetingsRouter = createTRPCRouter({
           .max(MAX_PAGE_SIZE)
           .default(DEFAULT_PAGE_SIZE),
         search: z.string().nullish(),
+        agentId: z.string().nullish(),
+        status: z.enum([
+            MeetingStatus.Upcoming,
+            MeetingStatus.Active,
+            MeetingStatus.Completed,
+            MeetingStatus.Processing,
+            MeetingStatus.Cancelled,
+        ]).nullish(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const { page, pageSize, search } = input;
+      const { page, pageSize, search, agentId, status } = input;
       const conditions = [eq(meetings.userId, ctx.auth.user.id)];
       if (search) {
         conditions.push(ilike(meetings.name, `%${search}%`));
+      }
+      if (agentId) {
+        conditions.push(eq(meetings.agentId, agentId));
+      }
+      if (status) {
+        conditions.push(eq(meetings.status, status));
       }
 
       // Get the agents data without count for now
