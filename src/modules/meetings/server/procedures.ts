@@ -15,8 +15,33 @@ import {
   MeetingStatus,
   meetingsUpdateSchema,
 } from "../types";
+import { streamVideo } from "@/lib/stream-video";
+import { generateAvatarUri } from "@/lib/avatar";
 
 export const meetingsRouter = createTRPCRouter({
+  generateToken: protectedProcedure.mutation(async ({ ctx }) => {
+    await streamVideo.upsertUsers([
+      {
+        id: ctx.auth.user.id,
+        name: ctx.auth.user.name,
+        role: "admin",
+        image:
+          ctx.auth.user.image ??
+          generateAvatarUri({ seed: ctx.auth.user.id, variant: "initials" }),
+      },
+    ]);
+
+    const expirationTime = Math.floor(Date.now() / 1000) + 60 * 60;
+    const issuedAt = Math.floor(Date.now() / 1000) - 60;
+    const token = streamVideo.generateUserToken({
+      user_id: ctx.auth.user.id,
+      validity_in_seconds: issuedAt,
+      exp: expirationTime,
+    });
+
+    return token;
+  }),
+
   create: protectedProcedure
     .input(meetingsInsertSchema)
     .mutation(async ({ input, ctx }) => {
@@ -27,6 +52,49 @@ export const meetingsRouter = createTRPCRouter({
           userId: ctx.auth.user.id,
         })
         .returning();
+
+      const call = streamVideo.video.call('default', createdMeeting.id)
+      await call.create({
+        data: {
+          created_by_id: ctx.auth.user.id,
+          custom: {
+            meetingId: createdMeeting.id,
+            meetingName: createdMeeting.name,
+          },
+          settings_override: {
+            transcription: {
+              language: 'en',
+              mode: 'auto-on',
+              closed_caption_mode: 'auto-on',
+            },
+            recording: {
+              mode: 'auto-on',
+              quality: "720p"
+            },
+          }
+        }
+      })
+
+      const [existingAgent] = await db
+        .select()
+        .from(agent)
+        .where(eq(agent.id, createdMeeting.agentId))
+
+      if (!existingAgent) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Agent you are looking for not found",
+        });
+      }
+
+      await streamVideo.upsertUsers([
+        {
+          id: existingAgent.id,
+          name: existingAgent.name,
+          role: "user",
+          image: generateAvatarUri({ seed: existingAgent.name, variant: "botttsNeutral" }),
+        }
+      ])
 
       return createdMeeting;
     }),
